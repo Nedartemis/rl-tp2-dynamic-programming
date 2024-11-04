@@ -1,7 +1,6 @@
 import random
 
 import numpy as np
-
 from dynamic_programming.grid_world_env import GridWorldEnv
 
 # Exercice 4: GridWorld avec du bruit
@@ -12,7 +11,6 @@ from dynamic_programming.grid_world_env import GridWorldEnv
 
 
 class StochasticGridWorldEnv(GridWorldEnv):
-
     """
     Stochastic version of the GridWorldEnv environment.
     Inherits from GridWorldEnv class.
@@ -68,7 +66,7 @@ class StochasticGridWorldEnv(GridWorldEnv):
             next_state, reward, is_done, _ = super().step(action, make_move=False)
             res.append((next_state, reward, prob, is_done, action))
 
-        return res
+        return res  # type: ignore
 
     def step(self, action, make_move: bool = True):
         """

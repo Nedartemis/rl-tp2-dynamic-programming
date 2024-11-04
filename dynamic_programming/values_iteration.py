@@ -1,5 +1,4 @@
 import numpy as np
-
 from dynamic_programming.grid_world_env import GridWorldEnv
 from dynamic_programming.mdp import MDP
 from dynamic_programming.stochastic_grid_word_env import StochasticGridWorldEnv
@@ -24,10 +23,39 @@ def mdp_value_iteration(mdp: MDP, max_iter: int = 1000, gamma=1.0) -> np.ndarray
     Estimation de la fonction de valeur grâce à l'algorithme "value iteration":
     https://en.wikipedia.org/wiki/Markov_decision_process#Value_iteration
     """
-    values = np.zeros(mdp.observation_space.n)
+    Vi = np.zeros(mdp.observation_space.n)
     # BEGIN SOLUTION
+    converged: bool = False
+
+    n_iter = 0
+    while not converged and n_iter < max_iter:
+
+        Vip1 = np.zeros(mdp.observation_space.n)
+
+        for s in range(0, mdp.observation_space.n):
+
+            # Estimer la fonction de valeur de chaque état
+            vs = np.zeros(mdp.action_space.n)
+            for a in range(0, mdp.action_space.n):
+                sp, reward, _ = mdp.P[s][a]
+                Pa_s_sp = 1
+                Ra_s_sp = reward
+                Vi_sp = Vi[sp]
+                v = Pa_s_sp * (Ra_s_sp + gamma * Vi_sp)
+                vs[a] = v
+
+            # Choisir l'action qui maximise la valeur
+            m = vs.max()
+
+            # Mettre à jour la valeur de l'état
+            Vip1[s] = m
+
+        converged = np.allclose(Vi, Vip1)
+        Vi = Vip1
+        n_iter += 1
+
     # END SOLUTION
-    return values
+    return Vi
 
 
 def grid_world_value_iteration(
@@ -40,8 +68,45 @@ def grid_world_value_iteration(
     Estimation de la fonction de valeur grâce à l'algorithme "value iteration".
     theta est le seuil de convergence (différence maximale entre deux itérations).
     """
-    values = np.zeros((4, 4))
+    Vi = np.zeros((env.height, env.width))
     # BEGIN SOLUTION
+    nb_actions = 4
+
+    converged: bool = False
+    n_iter = 0
+    states = [(y, x) for y in range(env.height) for x in range(env.width)]
+
+    while not converged and n_iter < max_iter:
+
+        Vip1 = np.zeros((env.height, env.width))
+
+        for s in states:
+
+            env.current_position = s
+            y, x = s
+
+            # Estimer la fonction de valeur de chaque état
+            value_for_each_action = np.zeros(nb_actions)
+            for a in range(0, nb_actions):
+                sp, reward, _, _ = env.step(action=a, make_move=False)
+
+                Pa_s_sp = env.moving_prob[y, x, a]
+                Ra_s_sp = reward
+                Vi_sp = Vi[sp]
+                v = Pa_s_sp * (Ra_s_sp + gamma * Vi_sp)
+                value_for_each_action[a] = v
+
+            # Choisir l'action qui maximise la valeur
+            m = value_for_each_action.max()
+
+            # Mettre à jour la valeur de l'état
+            Vip1[s] = m
+
+        converged = np.allclose(Vi, Vip1, rtol=theta)
+        Vi = Vip1
+        n_iter += 1
+
+    return Vi
     # END SOLUTION
 
 
@@ -70,5 +135,46 @@ def stochastic_grid_world_value_iteration(
     gamma: float = 1.0,
     theta: float = 1e-5,
 ) -> np.ndarray:
-    values = np.zeros((4, 4))
+    Vi = np.zeros((4, 4))
     # BEGIN SOLUTION
+    nb_actions = 4
+
+    converged: bool = False
+    n_iter = 0
+    states = [(y, x) for y in range(env.height) for x in range(env.width)]
+
+    while not converged and n_iter < max_iter:
+
+        Vip1 = np.zeros((env.height, env.width))
+
+        for s in states:
+
+            env.current_position = s
+            y, x = s
+
+            # Estimer la fonction de valeur de chaque état
+            value_for_each_action = np.zeros(nb_actions)
+            for action_tried in range(0, nb_actions):
+                my_sum = 0
+                for sp, reward, prob, _, action_effective in env.get_next_states(
+                    action_tried
+                ):
+                    Pa_s_sp = prob * env.moving_prob[y, x, action_effective]
+                    Ra_s_sp = reward
+                    Vi_sp = Vi[sp]
+                    my_sum += Pa_s_sp * (Ra_s_sp + gamma * Vi_sp)
+
+                value_for_each_action[action_tried] = my_sum
+
+            # Choisir l'action qui maximise la valeur
+            m = value_for_each_action.max()
+
+            # Mettre à jour la valeur de l'état
+            Vip1[s] = m
+
+        converged = np.allclose(Vi, Vip1, rtol=theta)
+        Vi = Vip1
+        n_iter += 1
+
+    return Vi
+    # END SOLUTION

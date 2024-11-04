@@ -24,6 +24,11 @@ def fibonacci(n: int) -> int:
     Calcule le n-ième terme de la suite de Fibonacci.
     """
     # BEGIN SOLUTION
+    if n == 0:
+        return 0
+    if n == 1:
+        return 1
+    return fibonacci(n - 2) + fibonacci(n - 1)
     # END SOLUTION
 
 
@@ -42,4 +47,14 @@ def fibonacci_memo(n: int) -> int:
     """
 
     # BEGIN SOLUTION
+    memo = [-1] * max(n + 1, 2)
+    memo[0] = 0
+    memo[1] = 1
+
+    def rec(n2: int) -> int:
+        if memo[n2] == -1:
+            memo[n2] = rec(n2 - 2) + rec(n2 - 1)
+        return memo[n2]
+
+    return rec(n)
     # END SOLUTION
